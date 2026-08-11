@@ -8,30 +8,18 @@ const path = require('path');
 
 const app = express();
 
+// ==========================================
+// Middleware
+// ==========================================
+
 app.use(cors());
 app.use(express.json());
-
-// ======================================
-// عرض ملفات الموقع
-// index.html
-// admin.html
-// css/js/images/logos/products...
-// ======================================
-
-app.use(express.static(__dirname));
+app.use(express.urlencoded({ extended: true }));
 
 
-// ======================================
-// IMAGE UPLOAD SETTINGS
-// ======================================
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 20 * 1024 * 1024
-  }
-});
-
+// ==========================================
+// ImageKit Configuration
+// ==========================================
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -40,20 +28,65 @@ const imagekit = new ImageKit({
 });
 
 
-// ======================================
-// HEALTH CHECK
-// ======================================
+// ==========================================
+// Multer - receive image in memory
+// ==========================================
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+
+  limits: {
+    fileSize: 20 * 1024 * 1024 // 20 MB
+  },
+
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+
+// ==========================================
+// Health Check
+// ==========================================
 
 app.get('/api/health', (req, res) => {
   res.json({
-    ok: true
+    ok: true,
+    message: 'MEEM JOR server is running'
   });
 });
 
 
-// ======================================
-// PRODUCT IMAGE UPLOAD
-// ======================================
+// ==========================================
+// ImageKit authentication
+// ==========================================
+
+app.get('/api/imagekit-auth', (req, res) => {
+  try {
+
+    const authenticationParameters =
+      imagekit.getAuthenticationParameters();
+
+    res.json(authenticationParameters);
+
+  } catch (error) {
+
+    console.error('ImageKit auth error:', error);
+
+    res.status(500).json({
+      error: 'Failed to generate ImageKit authentication'
+    });
+  }
+});
+
+
+// ==========================================
+// Upload image to ImageKit
+// ==========================================
 
 app.post(
   '/api/upload-image',
@@ -64,21 +97,18 @@ app.post(
 
       if (!req.file) {
         return res.status(400).json({
+          success: false,
           error: 'No image uploaded'
         });
       }
 
-      if (!req.file.mimetype.startsWith('image/')) {
-        return res.status(400).json({
-          error: 'Only image files are allowed'
-        });
-      }
+      const originalName =
+        req.file.originalname || 'product-image.jpg';
 
-      const safeName =
-        req.file.originalname.replace(
-          /[^a-zA-Z0-9._-]/g,
-          '_'
-        );
+      const safeName = originalName.replace(
+        /[^a-zA-Z0-9._-]/g,
+        '_'
+      );
 
       const fileName =
         Date.now() + '_' + safeName;
@@ -92,51 +122,114 @@ app.post(
       });
 
 
+      console.log('Image uploaded:', result.url);
+
+
       res.json({
         success: true,
+
         url: result.url,
-        fileId: result.fileId
+
+        fileId: result.fileId,
+
+        name: result.name,
+
+        thumbnailUrl: result.thumbnailUrl || null
       });
 
     } catch (error) {
 
       console.error(
-        'ImageKit server upload error:',
+        'ImageKit upload error:',
         error
       );
 
       res.status(500).json({
+        success: false,
+
         error:
           error.message ||
           'Image upload failed'
       });
-
     }
-
   }
 );
 
 
-// ======================================
-// MAIN WEBSITE
-// ======================================
+// ==========================================
+// Serve website files
+// ==========================================
+
+// يسمح بعرض:
+// index.html
+// admin.html
+// data.js
+// firebase-config.js
+// logos/
+// products/
+// etc.
+
+app.use(express.static(__dirname));
+
+
+// ==========================================
+// Main Website
+// ==========================================
 
 app.get('/', (req, res) => {
+
   res.sendFile(
     path.join(__dirname, 'index.html')
   );
+
 });
 
 
-// ======================================
-// SERVER
-// ======================================
+// ==========================================
+// Admin Page
+// ==========================================
 
-const PORT =
-  process.env.PORT || 3000;
+app.get('/admin', (req, res) => {
+
+  res.sendFile(
+    path.join(__dirname, 'admin.html')
+  );
+
+});
+
+
+// ==========================================
+// 404
+// مهم: لازم يكون آخر Route
+// ==========================================
+
+app.use((req, res) => {
+
+  res.status(404).send(
+    '404 - Page Not Found'
+  );
+
+});
+
+
+// ==========================================
+// Start Server
+// ==========================================
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
+
   console.log(
-    `Server running on port ${PORT}`
+    `MEEM JOR server running on port ${PORT}`
   );
+
+  console.log(
+    `ImageKit endpoint: ${
+      process.env.IMAGEKIT_URL_ENDPOINT
+        ? 'Configured'
+        : 'Missing'
+    }`
+  );
+
 });
