@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم ميم — MEEM JOR Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0c0c; --paper:#ffffff; --sand:#f6f3ee; --brass:#b2985f; --brass-soft:#e7dfcd;
+    --line: rgba(12,12,12,0.12); --font:'Almarai', sans-serif; --danger:#b23a3a; --ok:#3a8f5c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{ background:var(--sand); color:var(--ink); font-family:var(--font); min-height:100vh; }
+  button{ font-family:inherit; border:none; cursor:pointer; }
+  input, textarea, select{ font-family:inherit; }
+  a{ color:inherit; }
+
+  .top{ background:var(--ink); color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  .top h1{ font-size:18px; font-weight:700; }
+  .top .mode-flag{ font-size:11.5px; padding:5px 12px; border-radius:999px; margin-inline-start:10px; }
+  .mode-flag.local{ background:#a5762c; }
+  .mode-flag.live{ background:#2f7a4b; }
+  .top button{ background:rgba(255,255,255,.1); color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; }
+  .top button:hover{ background:rgba(255,255,255,.2); }
+
+  .wrap{ max-width:1100px; margin:0 auto; padding:30px 20px 80px; }
+
+  /* Login */
+  .login-box{ max-width:380px; margin:80px auto; background:#fff; border-radius:16px; padding:36px 30px; border:1px solid var(--line); }
+  .login-box h2{ margin-bottom:6px; font-size:22px; }
+  .login-box .sub{ font-size:13px; color:rgba(12,12,12,.55); margin-bottom:24px; line-height:1.7; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13px; margin-bottom:6px; color:rgba(12,12,12,.65); }
+  .field input, .field textarea, .field select{
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:8px; font-size:14.5px; background:#fff;
+  }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--brass); }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 22px; border-radius:8px; font-size:14px; transition:.25s; }
+  .btn-primary{ background:var(--brass); color:#fff; }
+  .btn-primary:hover{ background:#9c8350; }
+  .btn-dark{ background:var(--ink); color:#fff; }
+  .btn-dark:hover{ background:#2a2a2a; }
+  .btn-danger{ background:var(--danger); color:#fff; }
+  .btn-danger:hover{ background:#8f2c2c; }
+  .btn-ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); }
+  .btn-ghost:hover{ border-color:var(--brass); }
+  .btn[disabled]{ opacity:.5; cursor:not-allowed; }
+  .full{ width:100%; }
+  .err-msg{ color:var(--danger); font-size:13px; margin-top:10px; display:none; }
+
+  /* Tabs */
+  .tabs{ display:flex; gap:8px; margin-bottom:26px; flex-wrap:wrap; }
+  .tab{ padding:10px 20px; border-radius:999px; background:#fff; border:1px solid var(--line); font-size:13.5px; }
+  .tab.active{ background:var(--ink); color:#fff; }
+  .tab-badge{ background:var(--brass); color:#fff; font-size:11px; border-radius:999px; padding:1px 7px; margin-inline-start:6px; }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px; margin-bottom:18px; }
+  .card h3{ font-size:16px; margin-bottom:14px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+  .prod-row{ display:flex; gap:14px; align-items:center; padding:14px; border:1px solid var(--line); border-radius:12px; margin-bottom:12px; background:#fff; flex-wrap:wrap; }
+  .prod-row img{ width:64px; height:64px; object-fit:contain; background:var(--sand); border-radius:8px; flex-shrink:0; }
+  .prod-row .pr-info{ flex:1; min-width:180px; }
+  .prod-row .pr-info b{ font-size:15px; }
+  .prod-row .pr-info .pr-meta{ font-size:12px; color:rgba(12,12,12,.55); margin-top:2px; }
+  .status-chip{ font-size:11.5px; padding:4px 10px; border-radius:999px; }
+  .status-chip.available{ background:#e4f3e9; color:var(--ok); }
+  .status-chip.soldout{ background:#f6e6e6; color:var(--danger); }
+  .row-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .row-actions button{ padding:8px 14px; border-radius:8px; font-size:12.5px; }
+
+  .rev-row, .sug-row{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:12px; }
+  .rev-row .rr-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .rev-row .rr-name{ font-weight:700; }
+  .rev-row .rr-stars{ color:var(--brass); }
+  .rev-row .rr-text{ font-size:14px; line-height:1.7; color:rgba(12,12,12,.75); margin-bottom:10px; }
+  .sug-row .sg-text{ font-size:14px; line-height:1.7; margin-bottom:10px; }
+  .empty{ text-align:center; padding:50px 20px; color:rgba(12,12,12,.45); font-size:14px; border:1px dashed var(--line); border-radius:12px; }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:13px 24px; border-radius:999px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:.35s; z-index:999; max-width:90vw; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .img-preview{ width:90px; height:90px; object-fit:contain; background:var(--sand); border-radius:8px; margin-top:8px; }
+  .banner-note{ background:#fff8ea; border:1px solid #ecd9a8; border-radius:10px; padding:14px 16px; font-size:12.5px; line-height:1.8; color:#6b5a2c; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>لوحة تحكم ميم 🤍</h2>
+    <div class="sub" id="loginSub">سجّلي دخولك لإدارة المنتجات والآراء والاقتراحات.</div>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+    <div class="field"><label>كلمة المرور</label><input type="password" id="loginPass" placeholder="••••••••"></div>
+    <button class="btn btn-dark full" id="loginBtn">تسجيل الدخول</button>
+    <div class="err-msg" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="adminScreen" style="display:none;">
+  <div class="top">
+    <h1>لوحة تحكم ميم <span class="mode-flag" id="modeFlag"></span></h1>
+    <button id="logoutBtn">تسجيل الخروج</button>
+  </div>
+  <div class="wrap">
+    <div class="tabs">
+      <button class="tab active" data-tab="products">المنتجات</button>
+      <button class="tab" data-tab="reviews">آراء العميلات <span class="tab-badge" id="revCount">0</span></button>
+      <button class="tab" data-tab="suggestions">الاقتراحات <span class="tab-badge" id="sugCount">0</span></button>
+    </div>
+
+    <!-- PRODUCTS PANEL -->
+    <div class="panel active" id="panel-products">
+      <div class="card">
+        <h3>إضافة منتج جديد</h3>
+        <div class="grid2">
+          <div class="field"><label>البراند</label>
+            <select id="npBrand">
+              <option value="miumiu">ميو ميو</option>
+              <option value="ysl">سان لوران</option>
+              <option value="lv">لوي فيتون</option>
+              <option value="coach">كوتش</option>
+            </select>
+          </div>
+          <div class="field"><label>الحالة</label>
+            <select id="npStatus"><option value="available">متوفر</option><option value="soldout">سولد أوت</option></select>
+          </div>
+          <div class="field"><label>اسم المنتج</label><input type="text" id="npName" placeholder="مثال: Arcadie"></div>
+          <div class="field"><label>الوصف القصير (لون/موديل)</label><input type="text" id="npTag" placeholder="مثال: جلد أسود"></div>
+          <div class="field"><label>السعر (دينار أردني)</label><input type="number" id="npPrice" placeholder="مثال: 18" min="0"></div>
+        </div>
+        <div class="field"><label>الوصف</label><textarea id="npDesc" rows="2" placeholder="وصف قصير للمنتج..."></textarea></div>
+        <div class="field">
+          <label>صورة المنتج</label>
+          <input type="file" id="npImage" accept="image/*">
+          <img id="npPreview" class="img-preview" style="display:none;">
+        </div>
+        <button class="btn btn-primary" id="addProductBtn">➕ إضافة المنتج</button>
+      </div>
+
+      <div class="card">
+        <h3>المنتجات الحالية (<span id="prodTotal">0</span>)</h3>
+        <div id="adminProdList"></div>
+      </div>
+    </div>
+
+    <!-- REVIEWS PANEL -->
+    <div class="panel" id="panel-reviews">
+      <div class="card">
+        <h3>آراء العميلات</h3>
+        <div id="adminRevList"></div>
+      </div>
+    </div>
+
+    <!-- SUGGESTIONS PANEL -->
+    <div class="panel" id="panel-suggestions">
+      <div class="card">
+        <h3>الاقتراحات الواردة</h3>
+        <div id="adminSugList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (يعمل تلقائياً فقط بعد تعبئة firebase-config.js) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+<script src="products-data.js"></script>
+<script src="data.js"></script>
+<script>
+  const toastEl = document.getElementById('toast');
+  function showToast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 3000); }
+  function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str==null?'':String(str); return d.innerHTML; }
+
+  const BRAND_LABELS = { miumiu:'ميو ميو', ysl:'سان لوران', lv:'لوي فيتون', coach:'كوتش' };
+
+  const loginScreen = document.getElementById('loginScreen');
+  const adminScreen = document.getElementById('adminScreen');
+  const modeFlag = document.getElementById('modeFlag');
+
+  if (!MeemData.usingFirebase) {
+    document.getElementById('loginSub').textContent = 'وضع محلي: Firebase مو مفعّل بعد، رح تدخلي مباشرة والتعديلات بتنحفظ على جهازك بس. لتفعيل المزامنة مع كل الزوار عبّي ملف firebase-config.js.';
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginErr');
+    errEl.style.display = 'none';
+    if (!MeemData.usingFirebase) { showAdmin(); return; }
+    try {
+      await MeemData.adminSignIn(email, pass);
+    } catch (e) {
+      errEl.textContent = 'بيانات الدخول غير صحيحة، أو لسا ما سوّيتِ مستخدم بـ Firebase Authentication.';
+      errEl.style.display = 'block';
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    if (MeemData.usingFirebase) await MeemData.adminSignOut();
+    location.reload();
+  });
+
+  function showAdmin() {
+    loginScreen.style.display = 'none';
+    adminScreen.style.display = 'block';
+    modeFlag.textContent = MeemData.usingFirebase ? '🟢 متصلة — تعديلاتك تنعكس فوراً عند كل الزوار' : '🟡 وضع محلي — على جهازك فقط';
+    modeFlag.className = 'mode-flag ' + (MeemData.usingFirebase ? 'live' : 'local');
+    initData();
+  }
+
+  MeemData.onAuthChange((user) => {
+    if (user) showAdmin();
+    else { loginScreen.style.display = 'block'; adminScreen.style.display = 'none'; }
+  });
+
+  /* ---------- TABS ---------- */
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ---------- IMAGE UPLOAD PREVIEW ---------- */
+/* ---------- IMAGE UPLOAD PREVIEW ---------- */
+
+let newProductFile = null;
+let newProductPreviewUrl = '';
+
+document.getElementById('npImage').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+
+  if (!file) {
+    newProductFile = null;
+    return;
+  }
+
+  newProductFile = file;
+
+  // حذف preview قديم لو موجود
+  if (newProductPreviewUrl) {
+    URL.revokeObjectURL(newProductPreviewUrl);
+  }
+
+  // Preview محلي فقط، بدون Base64
+  newProductPreviewUrl = URL.createObjectURL(file);
+
+  const prev = document.getElementById('npPreview');
+  prev.src = newProductPreviewUrl;
+  prev.style.display = 'block';
+});
+
+
+document.getElementById('addProductBtn').addEventListener('click', async () => {
+
+  const name = document.getElementById('npName').value.trim();
+  const tag = document.getElementById('npTag').value.trim();
+  const desc = document.getElementById('npDesc').value.trim();
+  const brand = document.getElementById('npBrand').value;
+  const status = document.getElementById('npStatus').value;
+  const price = parseFloat(document.getElementById('npPrice').value) || 0;
+
+  if (!name) {
+    showToast('اكتبي اسم المنتج أولاً');
+    return;
+  }
+
+  if (!newProductFile) {
+    showToast('اختاري صورة للمنتج');
+    return;
+  }
+
+  const addBtn = document.getElementById('addProductBtn');
+
+  try {
+
+    addBtn.disabled = true;
+    addBtn.textContent = 'جاري رفع الصورة...';
+
+    // ترفع الصورة إلى Firebase Storage
+    // أو Base64 مؤقتاً إذا Firebase غير مفعّل
+    const imageUrl =
+      await MeemData.uploadProductImage(newProductFile);
+
+    const stageMap = {
+      miumiu: 'stage-mm',
+      ysl: 'stage-ysl',
+      lv: 'stage-lv',
+      coach: 'stage-coach'
+    };
+
+    await MeemData.addProduct({
+      name: name,
+      tag: tag,
+      desc: desc,
+      brand: brand,
+      status: status,
+      price: price,
+      stage: stageMap[brand] || 'stage-mm',
+      img: imageUrl,
+      alt: name
+    });
+
+
+    // تنظيف الفورم
+    document.getElementById('npName').value = '';
+    document.getElementById('npTag').value = '';
+    document.getElementById('npPrice').value = '';
+    document.getElementById('npDesc').value = '';
+    document.getElementById('npImage').value = '';
+
+    const prev = document.getElementById('npPreview');
+    prev.src = '';
+    prev.style.display = 'none';
+
+    if (newProductPreviewUrl) {
+      URL.revokeObjectURL(newProductPreviewUrl);
+    }
+
+    newProductFile = null;
+    newProductPreviewUrl = '';
+
+    showToast('تمت إضافة المنتج ✅');
+
+  } catch (error) {
+
+    console.error('Add product error:', error);
+
+    showToast(
+      'صار خطأ أثناء رفع المنتج'
+    );
+
+  } finally {
+
+    addBtn.disabled = false;
+    addBtn.textContent = '➕ إضافة المنتج';
+
+  }
+
+});
+
+  function renderAdminProducts(list) {
+    document.getElementById('prodTotal').textContent = list.length;
+    const el = document.getElementById('adminProdList');
+    if (!list.length) { el.innerHTML = '<div class="empty">ما في منتجات بعد</div>'; return; }
+    el.innerHTML = list.map(p => `
+      <div class="prod-row" data-id="${p.id}">
+        <img src="${p.img}" alt="">
+        <div class="pr-info">
+          <b>${escapeHtml(p.name)}</b> <span class="status-chip ${p.status}">${p.status === 'soldout' ? 'سولد أوت' : 'متوفر'}</span>
+          <div class="pr-meta">${escapeHtml(BRAND_LABELS[p.brand] || p.brand)} — ${escapeHtml(p.tag || '')} — <b style="color:#b2985f;">${(p.price || 0) + ' JOD'}</b></div>
+        </div>
+        <div class="row-actions">
+          <button class="btn-ghost" data-toggle="${p.id}" data-status="${p.status}">${p.status === 'soldout' ? '✔️ اجعليه متوفر' : '🚫 اجعليه سولد أوت'}</button>
+          <button class="btn-danger" data-delp="${p.id}">حذف</button>
+        </div>
+      </div>`).join('');
+  }
+
+  document.getElementById('adminProdList').addEventListener('click', async (e) => {
+    const toggleBtn = e.target.closest('[data-toggle]');
+    const delBtn = e.target.closest('[data-delp]');
+    if (toggleBtn) {
+      const newStatus = toggleBtn.dataset.status === 'soldout' ? 'available' : 'soldout';
+      await MeemData.updateProduct(toggleBtn.dataset.toggle, { status: newStatus });
+      showToast('تم تحديث حالة المنتج');
+    }
+    if (delBtn) {
+      if (!confirm('متأكدة إنك بدك تحذفي هاد المنتج نهائياً؟')) return;
+      await MeemData.deleteProduct(delBtn.dataset.delp);
+      showToast('تم حذف المنتج');
+    }
+  });
+
+  /* ---------- REVIEWS ---------- */
+  function renderAdminReviews(list) {
+    document.getElementById('revCount').textContent = list.length;
+    const el = document.getElementById('adminRevList');
+    if (!list.length) { el.innerHTML = '<div class="empty">ما في آراء بعد</div>'; return; }
+    el.innerHTML = list.map(r => `
+      <div class="rev-row">
+        <div class="rr-top"><span class="rr-name">${escapeHtml(r.name)}</span><span class="rr-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span></div>
+        <div class="rr-text">${escapeHtml(r.text || '')}</div>
+        <button class="btn-danger" data-delr="${r.id}">حذف الرأي</button>
+      </div>`).join('');
+  }
+  document.getElementById('adminRevList').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-delr]');
+    if (!btn) return;
+    if (!confirm('حذف هاد الرأي؟')) return;
+    await MeemData.deleteReview(btn.dataset.delr);
+    showToast('تم حذف الرأي');
+  });
+
+  /* ---------- SUGGESTIONS ---------- */
+  function renderAdminSuggestions(list) {
+    document.getElementById('sugCount').textContent = list.length;
+    const el = document.getElementById('adminSugList');
+    if (!list.length) { el.innerHTML = '<div class="empty">ما في اقتراحات بعد</div>'; return; }
+    el.innerHTML = list.map(s => `
+      <div class="sug-row">
+        <div class="sg-text">${escapeHtml(s.text)}</div>
+        <button class="btn-danger" data-dels="${s.id}">حذف</button>
+      </div>`).join('');
+  }
+  document.getElementById('adminSugList').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-dels]');
+    if (!btn) return;
+    await MeemData.deleteSuggestion(btn.dataset.dels);
+    showToast('تم الحذف');
+  });
+
+  function initData() {
+    if (MeemData.usingFirebase) MeemData.seedFirestoreIfEmpty();
+    MeemData.listenProducts(renderAdminProducts);
+    MeemData.listenReviews(renderAdminReviews);
+    MeemData.listenSuggestions(renderAdminSuggestions);
+  }
+</script>
+</body>
+</html>
