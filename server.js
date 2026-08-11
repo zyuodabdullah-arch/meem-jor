@@ -4,11 +4,26 @@ const express = require('express');
 const ImageKit = require('imagekit');
 const cors = require('cors');
 const multer = require('multer');
+const path = require('path');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// ======================================
+// عرض ملفات الموقع
+// index.html
+// admin.html
+// css/js/images/logos/products...
+// ======================================
+
+app.use(express.static(__dirname));
+
+
+// ======================================
+// IMAGE UPLOAD SETTINGS
+// ======================================
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -17,6 +32,7 @@ const upload = multer({
   }
 });
 
+
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -24,9 +40,9 @@ const imagekit = new ImageKit({
 });
 
 
-/* =========================
-   HEALTH CHECK
-========================= */
+// ======================================
+// HEALTH CHECK
+// ======================================
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -35,9 +51,9 @@ app.get('/api/health', (req, res) => {
 });
 
 
-/* =========================
-   IMAGE UPLOAD
-========================= */
+// ======================================
+// PRODUCT IMAGE UPLOAD
+// ======================================
 
 app.post(
   '/api/upload-image',
@@ -67,12 +83,14 @@ app.post(
       const fileName =
         Date.now() + '_' + safeName;
 
+
       const result = await imagekit.upload({
         file: req.file.buffer,
         fileName: fileName,
         folder: '/products',
         useUniqueFileName: true
       });
+
 
       res.json({
         success: true,
@@ -99,14 +117,25 @@ app.post(
 );
 
 
-/* =========================
-   SERVER
-========================= */
+// ======================================
+// MAIN WEBSITE
+// ======================================
+
+app.get('/', (req, res) => {
+  res.sendFile(
+    path.join(__dirname, 'index.html')
+  );
+});
+
+
+// ======================================
+// SERVER
+// ======================================
 
 const PORT =
   process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(
     `Server running on port ${PORT}`
   );
