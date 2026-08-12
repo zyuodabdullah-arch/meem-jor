@@ -327,14 +327,13 @@ const MeemData = (function () {
         من localhost إلى رابط السيرفر الحقيقي.
       */
 
-    const response =
-  await fetch(
-    '/api/upload-image',
-    {
-      method: 'POST',
-      body: formData
-    }
-  );
+ const response = await fetch(
+  '/api/upload-image',
+  {
+    method: 'POST',
+    body: formData
+  }
+);
 
 
       let result;
